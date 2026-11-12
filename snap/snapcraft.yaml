@@ -1,0 +1,72 @@
+name: overlay-timer-widget
+base: core24
+version: '1.0'
+summary: Floating overlay timer widget
+description: |
+  A lightweight, floating desktop overlay timer widget for Ubuntu.
+  Supports continuous ticking loop audio, custom alarms, and stays on top of all windows.
+
+grade: stable
+confinement: strict
+
+apps:
+  overlay-timer-widget:
+    command: bin/timer
+    desktop: usr/share/applications/overlay-timer-widget.desktop
+    environment:
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages
+      QT_QPA_PLATFORM_PLUGIN_PATH: $SNAP/lib/python3.12/site-packages/PyQt6/Qt6/plugins/platforms
+      XDG_DATA_DIRS: $SNAP/usr/share:$XDG_DATA_DIRS
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+      PULSE_SERVER: unix:$XDG_RUNTIME_DIR/../pulse/native
+      XKB_CONFIG_ROOT: $SNAP/usr/share/X11/xkb
+    plugs:
+      - desktop
+      - desktop-legacy
+      - x11
+      - wayland
+      - opengl
+      - audio-playback
+      - home
+
+parts:
+  timer-app:
+    plugin: nil
+    source: .
+    build-packages:
+      - python3-pip
+    stage-packages:
+      - libpulse0
+      - libpulse-mainloop-glib0
+      - libegl1
+      - libgl1
+      - libxkbcommon0
+      - libxkbcommon-x11-0
+      - libfontconfig1
+      - libdbus-1-3
+      - libxcb-cursor0
+      - libxcb-icccm4
+      - libxcb-image0
+      - libxcb-keysyms1
+      - libxcb-render-util0
+      - libxcb-shape0
+      - libxcb-xinerama0
+      - libxcb-xkb1
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libxrandr2
+      - libxrender1
+      - libxfixes3
+      - libxext6
+      - xkb-data      
+    override-build: |
+      pip install --break-system-packages \
+        --target=$CRAFT_PART_INSTALL/lib/python3.12/site-packages PyQt6
+
+      mkdir -p $CRAFT_PART_INSTALL/bin
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
+      cp timer.py $CRAFT_PART_INSTALL/bin/timer
+      chmod +x $CRAFT_PART_INSTALL/bin/timer
+      cp tick.mp3 alarm.mp3 $CRAFT_PART_INSTALL/bin/
+      cp snap/gui/overlay-timer-widget.desktop $CRAFT_PART_INSTALL/usr/share/applications/
